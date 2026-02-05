@@ -1,24 +1,41 @@
 <!-- GitHub Pages rebuild -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Virtual Classroom Analyzer</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>Virtual Classroom Analyzer</h1>
 
-  <nav>
-    <button onclick="showSection('students')">Students</button>
-    <button onclick="showSection('analytics')">Analytics</button>
-    <button onclick="showSection('alerts')">Alerts</button>
-    <button onclick="showSection('settings')">Settings</button>
-  </nav>
+  <!-- Main Container -->
+  <div class="container">
 
-  <div id="content"></div>
+    <!-- Project Title -->
+    <h1>Virtual Classroom Analyzer</h1>
+    <p class="subtitle">
+      Analyze attendance, performance, and engagement
+    </p>
 
+    <!-- Navigation -->
+    <nav>
+      <button onclick="showSection('students')">Students</button>
+      <button onclick="showSection('analytics')">Analytics</button>
+      <button onclick="showSection('alerts')">Alerts</button>
+      <button onclick="showSection('settings')">Settings</button>
+    </nav>
+
+    <!-- Dynamic Content Area -->
+    <div id="content">
+      <p>Select a section to view details.</p>
+    </div>
+
+  </div>
+
+  <!-- JavaScript -->
   <script src="script.js"></script>
+
 </body>
 </html>
