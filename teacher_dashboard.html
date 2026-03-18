@@ -282,6 +282,33 @@
 
     </div>
 
+    <!-- Chat Floating Action Button -->
+    <button id="chatFab" class="chat-fab" title="Open Chat">
+        <i class="fas fa-comments"></i>
+        <span id="chatTotalCount" class="chat-fab-badge hidden">0</span>
+    </button>
+
+    <!-- Chat Modal -->
+    <div id="teacherChatModal" class="chat-modal-container hidden">
+        <div class="chat-modal-header">
+            <button id="backToStudentList" class="back-chat-btn hidden"><i class="fas fa-arrow-left"></i></button>
+            <h3 id="chatHeaderTitle">Chats</h3>
+            <button id="closeChatModal" class="close-chat-modal">&times;</button>
+        </div>
+        
+        <div id="chatStudentListView" class="chat-view-container">
+            <div id="chatStudentList" class="chat-student-list"></div>
+        </div>
+
+        <div id="chatConversationView" class="chat-view-container hidden">
+            <div id="teacherChatMessages" class="chat-modal-messages"></div>
+            <div class="chat-modal-input">
+                <input type="text" id="teacherChatInput" placeholder="Type your message...">
+                <button id="sendChatMessageBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="teacher_dashboard.js"></script>
 </body>

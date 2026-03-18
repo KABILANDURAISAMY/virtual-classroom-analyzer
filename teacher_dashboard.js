@@ -6,8 +6,11 @@ let students = [];
 let studyMaterials = [];
 let subjectChartInstances = {};
 let pendingNotifications = {};
+let currentChatPeerId = null;
 let studentsWithMarksAdded = new Set();
 let tempAttendanceData = {};
+let unreadCounts = {};
+let totalUnreadMessages = 0;
 
 // --- DOM Elements ---
 let studentGrid;
@@ -23,6 +26,18 @@ let subjectAnalysisSection;
 let attendanceSection;
 let sidebar;
 let sidebarToggle;
+let chatFab;
+let teacherChatModal;
+let closeChatModal;
+let chatStudentList;
+let chatStudentListView;
+let chatConversationView;
+let backToStudentList;
+let chatHeaderTitle;
+let chatTotalCount;
+let teacherChatMessages;
+let teacherChatInput;
+let sendChatMessageBtn;
 let closeSidebar;
 let logoutButton;
 
@@ -50,6 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarToggle = document.getElementById('sidebarToggle');
     closeSidebar = document.getElementById('closeSidebar');
     logoutButton = document.getElementById('logoutButton');
+    chatFab = document.getElementById('chatFab');
+    teacherChatModal = document.getElementById('teacherChatModal');
+    closeChatModal = document.getElementById('closeChatModal');
+    chatStudentList = document.getElementById('chatStudentList');
+    chatStudentListView = document.getElementById('chatStudentListView');
+    chatConversationView = document.getElementById('chatConversationView');
+    backToStudentList = document.getElementById('backToStudentList');
+    chatHeaderTitle = document.getElementById('chatHeaderTitle');
+    chatTotalCount = document.getElementById('chatTotalCount');
+    teacherChatMessages = document.getElementById('teacherChatMessages');
+    teacherChatInput = document.getElementById('teacherChatInput');
+    sendChatMessageBtn = document.getElementById('sendChatMessageBtn');
 
     updateUserInfo();
     fetchStudents();
@@ -122,6 +149,25 @@ function setupEventListeners() {
             showAddTaskSection();
         });
     }
+
+    // Chat Event Listeners
+    if (chatFab) {
+        chatFab.addEventListener('click', openChatModal);
+    }
+    if (closeChatModal) {
+        closeChatModal.addEventListener('click', () => teacherChatModal.classList.add('hidden'));
+    }
+    if (backToStudentList) {
+        backToStudentList.addEventListener('click', showChatStudentList);
+    }
+    if (sendChatMessageBtn) {
+        sendChatMessageBtn.addEventListener('click', sendChatMessage);
+    }
+    if (teacherChatInput) {
+        teacherChatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+    }
 }
 
 function initializeSocket() {
@@ -130,6 +176,20 @@ function initializeSocket() {
         socket.emit('joinRoom', currentUser.id);
     });
 
+    socket.on('receiveMessage', (msg) => {
+        // If the chat modal is open and the message is from the currently selected student
+        if (!teacherChatModal.classList.contains('hidden') && msg.sender_id === currentChatPeerId) {
+            appendChatMessage(msg);
+        } else {
+            // Increment counters
+            unreadCounts[msg.sender_id] = (unreadCounts[msg.sender_id] || 0) + 1;
+            updateTotalUnreadCount();
+            renderChatStudentList();
+            if (chatFab && teacherChatModal.classList.contains('hidden')) {
+                chatFab.style.animation = 'pulse 1s infinite'; // Pulse if closed
+            }
+        }
+    });
 }
 
 function updateUserInfo() {
@@ -163,6 +223,7 @@ async function fetchStudents() {
         students = await apiFetch(`${API_BASE}/students`);
         renderStudentGrid();
         populateTestStudentDropdown();
+        renderChatStudentList();
     } catch (error) {
         console.error('Failed to fetch students:', error);
         studentGrid.innerHTML = '<p class="error-message">Could not load students.</p>';
@@ -753,19 +814,117 @@ window.filterStudentAttendanceHistory = function(status, clickedButton) {
 }
 
 // --- Chat Functions ---
-async function loadChatHistory(userId, peerId) {
-    const container = document.getElementById('chatModalMessages');
-    if (!container) return;
-    container.innerHTML = '';
-    try {
-        const messages = await apiFetch(`${API_BASE}/messages/${userId}/${peerId}`);
-        messages.forEach(msg => appendMessage(msg));
-    } catch (error) {
-        console.error('Failed to load chat history:', error);
-        container.innerHTML = '<p class="error-message">Could not load chat.</p>';
+function updateTotalUnreadCount() {
+    totalUnreadMessages = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+    if (chatTotalCount) {
+        if (totalUnreadMessages > 0) {
+            chatTotalCount.textContent = totalUnreadMessages;
+            chatTotalCount.classList.remove('hidden');
+        } else {
+            chatTotalCount.classList.add('hidden');
+        }
     }
 }
 
+function openChatModal() {
+    teacherChatModal.classList.remove('hidden');
+    // Stop pulsing animation when opened
+    if (chatFab) {
+        chatFab.style.animation = '';
+    }
+    showChatStudentList();
+}
+
+function renderChatStudentList() {
+    if (!chatStudentList) return;
+    
+    chatStudentList.innerHTML = '';
+    students.forEach(student => {
+        const item = document.createElement('div');
+        item.className = 'chat-student-item';
+        
+        const count = unreadCounts[student.id] || 0;
+        const badgeHtml = count > 0 ? `<span class="chat-badge-inline">${count}</span>` : '';
+
+        item.innerHTML = `
+            <div class="chat-avatar-small">${student.name.charAt(0)}</div>
+            <div class="chat-student-info">
+                <span class="chat-student-name">${student.name}</span>
+            </div>
+            ${badgeHtml}
+        `;
+        item.onclick = () => openStudentChat(student);
+        chatStudentList.appendChild(item);
+    });
+}
+
+function showChatStudentList() {
+    chatStudentListView.classList.remove('hidden');
+    chatConversationView.classList.add('hidden');
+    backToStudentList.classList.add('hidden');
+    chatHeaderTitle.textContent = "Chats";
+    currentChatPeerId = null;
+}
+
+function openStudentChat(student) {
+    currentChatPeerId = student.id;
+    chatStudentListView.classList.add('hidden');
+    chatConversationView.classList.remove('hidden');
+    backToStudentList.classList.remove('hidden');
+    chatHeaderTitle.textContent = student.name;
+    
+    // Clear unread count for this student
+    if (unreadCounts[student.id]) {
+        unreadCounts[student.id] = 0;
+        updateTotalUnreadCount();
+        renderChatStudentList();
+    }
+
+    loadChatHistory(currentUser.id, student.id);
+}
+
+async function loadChatHistory(userId, peerId) {
+    if (!teacherChatMessages) return;
+    teacherChatMessages.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+    try {
+        const messages = await apiFetch(`${API_BASE}/messages/${userId}/${peerId}`);
+        teacherChatMessages.innerHTML = '';
+        if (messages.length === 0) {
+            teacherChatMessages.innerHTML = '<p class="chat-placeholder">No messages yet. Start the conversation!</p>';
+        } else {
+            messages.forEach(msg => appendChatMessage(msg));
+        }
+    } catch (error) {
+        console.error('Failed to load chat history:', error);
+        teacherChatMessages.innerHTML = '<p class="error-message">Could not load chat.</p>';
+    }
+}
+
+function appendChatMessage(msg) {
+    if (!teacherChatMessages) return;
+
+    const placeholder = teacherChatMessages.querySelector('.chat-placeholder, .loading-spinner');
+    if (placeholder) placeholder.remove();
+
+    const messageEl = document.createElement('div');
+    const isSent = msg.sender_id === currentUser.id;
+    messageEl.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
+    messageEl.textContent = msg.message;
+    teacherChatMessages.appendChild(messageEl);
+
+    teacherChatMessages.scrollTop = teacherChatMessages.scrollHeight;
+}
+
+function sendChatMessage() {
+    const messageText = teacherChatInput.value.trim();
+    if (!messageText || currentChatPeerId === null) return;
+
+    const messageData = { sender_id: currentUser.id, receiver_id: currentChatPeerId, message: messageText };
+    socket.emit('sendMessage', messageData);
+
+    appendChatMessage(messageData);
+    teacherChatInput.value = '';
+}
 // --- Add Test Score Functions ---
 function populateTestStudentDropdown() {
     const select = document.getElementById('testStudentName');

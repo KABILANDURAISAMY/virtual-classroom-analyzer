@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Virtual Classroom Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="student_dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="main-wrapper">
+        <header class="top-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-graduation-cap logo-icon"></i>
+                    <div>
+                        <h1>Student Dashboard</h1>
+                        <p>Welcome back, <span class="user-name">Student</span>!</p>
+                    </div>
+                </div>
+                <div class="user-actions">
+                    <span class="user-email"></span>
+                    <button id="logoutButton" class="logout-button" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Chat Section -->
+            <div class="dashboard-card chat-section">
+                <h3><i class="fas fa-comments"></i> Teacher Chat <span id="chatNotifCount" class="notif-count"></span></h3>
+                <p style="color:#64748b; font-size:0.9rem; flex:1;">Have questions? Chat directly with your teacher.</p>
+                <button class="action-btn chat-btn" onclick="openChatModal()">
+                    <i class="fas fa-paper-plane"></i> Start Chat
+                </button>
+            </div>
+
+            <!-- Notifications & Remarks -->
+            <div class="dashboard-card notifications-section">
+                <h3><i class="fas fa-bell"></i> Notifications & Remarks</h3>
+                <div id="notificationList" class="scrollable-list"></div>
+            </div>
+
+            <!-- Attendance Summary -->
+            <div class="dashboard-card attendance-section">
+                <h3><i class="fas fa-calendar-check"></i> Attendance Overview</h3>
+                <div id="attendanceContainer" class="attendance-content"></div>
+            </div>
+
+            <!-- Test Scores -->
+            <div class="dashboard-card scores-section">
+                <h3><i class="fas fa-chart-line"></i> Recent Performance</h3>
+                <div id="scoresContainer" class="scrollable-list"></div>
+            </div>
+
+            <!-- Subject Rankings -->
+            <div class="dashboard-card ranking-section">
+                <h3><i class="fas fa-trophy"></i> Subject Leaderboard</h3>
+                <div id="rankingContainer" class="scrollable-list"></div>
+            </div>
+
+            <!-- Tasks & Materials -->
+            <div class="dashboard-card tasks-section">
+                <h3><i class="fas fa-tasks"></i> Pending Tasks</h3>
+                <div id="tasksContainer" class="scrollable-list"></div>
+            </div>
+
+            <div class="dashboard-card materials-section">
+                <h3><i class="fas fa-book"></i> Study Materials</h3>
+                <div id="materialsContainer" class="materials-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Details Modal -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalDate">Test Details</h2>
+            <div id="modalScoreDetails"></div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content chat-modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-chalkboard-teacher" style="color:#4f46e5; margin-right:10px;"></i> Chat with Teacher</h2>
+                <span class="close-modal close-chat">&times;</span>
+            </div>
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Type a message...">
+                <button onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="student_dashboard.js"></script>
+</body>
+</html>
