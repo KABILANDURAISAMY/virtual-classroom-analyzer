@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTasks();
     fetchMaterials();
     initializeSocket();
+    fetchUnreadMessagesCount();
 });
 
 function setupEventListeners() {
@@ -102,15 +103,11 @@ function initializeSocket() {
 
     socket.on('dataUpdate', (data) => {
         if (data.type === 'score') {
-            const newNotification = {
-                remark: '📊 A new test score has been added to your profile.',
-                created_at: new Date().toISOString()
-            };
-            notifications.unshift(newNotification);
-            renderNotifications();
+            // The specific notification is now sent via the 'notification' event.
+            // This event just triggers a data refresh.
             fetchScores(); // Refresh scores table
             fetchRankings(); // Refresh rankings
-            alert('A new test score has been added!');
+            fetchNotifications(); // Refresh notifications list to see the new remark immediately
         }
         if (data.type === 'attendance') {
             // This is handled by the 'notification' event which is more specific
@@ -368,8 +365,6 @@ window.openScoreModal = function(index) {
         <div class="detail-row"><span>Maths</span> <span>${score.maths}</span></div>
         <div class="detail-row"><span>Science</span> <span>${score.science}</span></div>
         <div class="detail-row"><span>Social</span> <span>${score.social}</span></div>
-        <div class="detail-row total-row"><span>Total Score</span> <span>${total} / 500</span></div>
-        <div class="detail-row"><span>Percentage</span> <span>${avg}%</span></div>
     `;
     
     modal.classList.add('active');
@@ -446,8 +441,98 @@ async function fetchTasks() {
 window.openChatModal = async function() {
     const modal = document.getElementById('chatModal');
     modal.classList.add('active');
+
+    // Save last read time to local storage for persistence
+    localStorage.setItem('lastChatReadTime', new Date().toISOString());
+
+    // Inject Delete Chat Button if it doesn't exist
+    const header = modal.querySelector('.modal-header');
+    if (header && !header.querySelector('.student-clear-chat')) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        deleteBtn.className = 'student-clear-chat';
+        deleteBtn.type = 'button'; // Prevent form submission
+        deleteBtn.title = 'Clear Chat History';
+        
+        // Insert before the close button
+        const closeBtn = modal.querySelector('.close-chat') || header.lastElementChild;
+        if (closeBtn) {
+            header.insertBefore(deleteBtn, closeBtn);
+        } else {
+            header.appendChild(deleteBtn);
+        }
+        
+        deleteBtn.onclick = (e) => {
+            e.preventDefault();
+            window.clearStudentChat();
+        };
+    }
+
+    // Reset unread count and hide notification
+    unreadMessages = 0;
+    updateChatNotificationCount();
+
     await fetchChatHistory();
     scrollToBottom();
+}
+
+window.clearStudentChat = async function() {
+    if (currentUser.id === undefined || currentUser.id === null) {
+        alert('Session invalid. Please log in again.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete your chat history with the teacher? This cannot be undone.')) return;
+    try {
+        await apiFetch(`${API_BASE}/messages/${currentUser.id}/${TEACHER_ID}`, { method: 'DELETE' });
+        document.getElementById('chatMessages').innerHTML = '<p style="text-align:center;color:#94a3b8; margin-top: 50px;">Chat history cleared.</p>';
+    } catch (e) {
+        console.error(e);
+        alert('Failed to clear chat.');
+    }
+}
+
+async function fetchUnreadMessagesCount() {
+    try {
+        const messages = await apiFetch(`${API_BASE}/messages/${currentUser.id}/${TEACHER_ID}`);
+        const lastRead = localStorage.getItem('lastChatReadTime');
+        
+        if (messages && messages.length > 0) {
+            if (lastRead) {
+                // Count messages from teacher that are newer than last read time
+                unreadMessages = messages.filter(m => m.sender_id === TEACHER_ID && new Date(m.timestamp) > new Date(lastRead)).length;
+            } else {
+                // If never opened, count all messages from teacher
+                unreadMessages = messages.filter(m => m.sender_id === TEACHER_ID).length;
+            }
+        }
+        updateChatNotificationCount();
+    } catch (error) {
+        console.error('Error fetching unread count:', error);
+    }
+}
+
+function updateChatNotificationCount() {
+    let notifCountEl = document.querySelector('.chat-btn .notif-count');
+    
+    // Auto-create badge if missing from HTML
+    if (!notifCountEl) {
+        const chatBtn = document.querySelector('.chat-btn');
+        if (chatBtn) {
+            notifCountEl = document.createElement('span');
+            notifCountEl.className = 'notif-count';
+            chatBtn.appendChild(notifCountEl);
+        }
+    }
+
+    if (notifCountEl) {
+        notifCountEl.textContent = unreadMessages > 9 ? '9+' : unreadMessages;
+        if (unreadMessages > 0) {
+            notifCountEl.classList.add('visible');
+        } else {
+            notifCountEl.classList.remove('visible');
+        }
+    }
 }
 
 async function fetchChatHistory() {

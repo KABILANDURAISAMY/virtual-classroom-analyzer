@@ -210,9 +210,70 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 
 app.post('/api/test-scores', authenticateToken, async (req, res) => {
     try {
-        const score = await TestScore.create(req.body);
-        io.to(`user_${req.body.student_id}`).emit('dataUpdate', { type: 'score' });
-        res.json({ success: true, id: score._id });
+        const { student_id, test_date, tamil, english, maths, science, social } = req.body;
+
+        // Ensure ID is an integer for consistent DB querying and Socket rooms
+        const sId = parseInt(student_id, 10);
+
+        // 1. Find the most recent previous score for this student
+        const lastScore = await TestScore.findOne({ student_id: sId })
+            .sort({ test_date: -1 });
+
+        // 2. Save the new score
+        const newScore = await TestScore.create(req.body);
+
+        // 3. Calculate averages and analyze subjects
+        const subjects = ['tamil', 'english', 'maths', 'science', 'social'];
+        const newScores = { tamil, english, maths, science, social };
+        const newAvg = subjects.reduce((acc, sub) => acc + (newScores[sub] || 0), 0) / 5;
+        let remarkText = '';
+
+        // 4. Compare and create a remark
+        if (lastScore) {
+            const oldAvg = subjects.reduce((acc, sub) => acc + (lastScore[sub] || 0), 0) / 5;
+            const diff = newAvg - oldAvg;
+
+            // Overall Comparison
+            if (newAvg > oldAvg) {
+                remarkText += `📈 OVERALL: Avg up ${diff.toFixed(1)}% (${oldAvg.toFixed(1)}%→${newAvg.toFixed(1)}%). `;
+            } else if (newAvg < oldAvg) {
+                remarkText += `📉 OVERALL: Avg down ${Math.abs(diff).toFixed(1)}% (${oldAvg.toFixed(1)}%→${newAvg.toFixed(1)}%). `;
+            } else {
+                remarkText += `📊 OVERALL: Avg steady at ${newAvg.toFixed(1)}%. `;
+            }
+
+            // Subject Comparison
+            const ups = [], downs = [];
+            subjects.forEach(sub => {
+                const change = (newScores[sub] || 0) - (lastScore[sub] || 0);
+                const name = sub.charAt(0).toUpperCase() + sub.slice(1);
+                if (change > 0) ups.push(`${name} +${change}`);
+                if (change < 0) downs.push(`${name} ${change}`);
+            });
+
+            if (ups.length) remarkText += `👍 GAINS: ${ups.join(', ')}. `;
+            if (downs.length) remarkText += `👎 DROPS: ${downs.join(', ')}. `;
+
+            // Advice
+            if (downs.length > 0) {
+                remarkText += `ADVICE: Review concepts in ${downs.map(s => s.split(' ')[0]).join(', ')} to recover marks.`;
+            } else if (ups.length > 0) {
+                remarkText += `ADVICE: Great improvement! Keep this momentum going.`;
+            } else {
+                remarkText += `ADVICE: Consistent performance. Try to push one subject higher next time.`;
+            }
+        } else {
+            // First test score
+            remarkText = `🏁 FIRST TEST: Average ${newAvg.toFixed(1)}%. ADVICE: This is your baseline. Aim to improve in upcoming tests!`;
+        }
+
+        // 5. Save the remark and send notifications
+        await Remark.create({ student_id: sId, remark: remarkText });
+        console.log(`Sending notification to user_${sId}: ${remarkText}`); // Debug log
+        io.to(`user_${sId}`).emit('notification', { type: 'remark', message: remarkText });
+        io.to(`user_${sId}`).emit('dataUpdate', { type: 'score' });
+
+        res.json({ success: true, id: newScore._id });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -409,6 +470,31 @@ app.delete('/api/study-materials/:id', authenticateToken, async (req, res) => {
 });
 
 // --- Messaging ---
+app.get('/api/messages/unread', authenticateToken, async (req, res) => {
+    try {
+        const userId = parseInt(req.user.id, 10);
+        if (isNaN(userId)) return res.status(400).json({ error: 'Invalid User ID' });
+
+        const unreadAggregation = await Message.aggregate([
+            { 
+                $match: { 
+                    receiver_id: userId, 
+                    $or: [{ is_read: false }, { is_read: { $exists: false } }] 
+                } 
+            },
+            { $group: { _id: "$sender_id", count: { $sum: 1 } } }
+        ]);
+
+        const counts = {};
+        unreadAggregation.forEach(item => {
+            counts[item._id] = item.count;
+        });
+        res.json(counts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/messages/:userId/:peerId', authenticateToken, async (req, res) => {
     try {
         const { userId, peerId } = req.params;
@@ -429,8 +515,53 @@ app.get('/api/messages/:userId/:peerId', authenticateToken, async (req, res) => 
                 { sender_id: numPeerId, receiver_id: numUserId },
             ]
         }).sort({ timestamp: 'asc' });
+
+        // Mark messages as read
+        await Message.updateMany(
+            { sender_id: numPeerId, receiver_id: numUserId, is_read: false },
+            { $set: { is_read: true } }
+        );
+
         res.json(messages);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/messages/:userId/:peerId', authenticateToken, async (req, res) => {
+    try {
+        const { userId, peerId } = req.params;
+        const numUserId = parseInt(userId, 10);
+        const numPeerId = parseInt(peerId, 10);
+
+        if (isNaN(numUserId) || isNaN(numPeerId)) {
+            return res.status(400).json({ error: 'Invalid user or peer ID' });
+        }
+
+        // Ensure the user is requesting their own messages
+        const requesterId = parseInt(req.user.id, 10);
+        
+        // Check if req.user exists
+        if (!req.user || req.user.id === undefined) {
+             return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Use loose equality (!=) to handle cases where token ID might be string vs number
+        if (req.user.id != numUserId) {
+            console.warn(`Unauthorized delete attempt. Token User: ${req.user.id}, Param User: ${numUserId}`);
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        
+        await Message.deleteMany({
+            $or: [
+                { sender_id: numUserId, receiver_id: numPeerId },
+                { sender_id: numPeerId, receiver_id: numUserId },
+            ]
+        });
+        console.log(`Chat deleted between ${numUserId} and ${numPeerId}`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete chat error:', err);
         res.status(500).json({ error: err.message });
     }
 });

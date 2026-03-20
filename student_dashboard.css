@@ -406,6 +406,7 @@ body {
     align-self: flex-end;
     gap: 10px;
     transition: transform 0.2s;
+    position: relative;
 }
 .chat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
 
@@ -504,15 +505,36 @@ body {
 .chat-input-area button:hover { background: #4338ca; }
 
 .notif-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
     background-color: #ef4444;
     color: white;
     border-radius: 50%;
-    padding: 1px 7px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
     font-size: 0.75rem;
     font-weight: 700;
-    margin-left: 8px;
     display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 .notif-count.visible {
-    display: inline-block;
+    display: flex;
 }
+
+.student-clear-chat {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-right: 15px;
+    transition: color 0.2s;
+    margin-left: auto; /* Push to right if needed, or adjust based on flex layout */
+}
+.student-clear-chat:hover { color: #dc2626; }

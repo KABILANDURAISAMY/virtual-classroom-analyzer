@@ -38,11 +38,12 @@ let chatTotalCount;
 let teacherChatMessages;
 let teacherChatInput;
 let sendChatMessageBtn;
+let clearChatBtn;
 let closeSidebar;
 let logoutButton;
 
 // --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!token || currentUser.id === undefined) {
         alert('Authentication error. Please log in again.');
         window.location.href = 'index.html';
@@ -77,11 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
     teacherChatMessages = document.getElementById('teacherChatMessages');
     teacherChatInput = document.getElementById('teacherChatInput');
     sendChatMessageBtn = document.getElementById('sendChatMessageBtn');
+    clearChatBtn = document.getElementById('clearChatBtn');
 
     updateUserInfo();
-    fetchStudents();
     fetchTasks();
     fetchStudyMaterials();
+    
+    await fetchStudents(); // Wait for students to load first
+    fetchUnreadCounts();   // Then calculate unread messages based on student list
     setupEventListeners();
 
     initializeSocket();
@@ -168,6 +172,13 @@ function setupEventListeners() {
             if (e.key === 'Enter') sendChatMessage();
         });
     }
+
+    if (clearChatBtn) {
+        clearChatBtn.onclick = (e) => {
+            e.preventDefault();
+            window.clearCurrentChat();
+        };
+    }
 }
 
 function initializeSocket() {
@@ -177,12 +188,17 @@ function initializeSocket() {
     });
 
     socket.on('receiveMessage', (msg) => {
+        const senderId = parseInt(msg.sender_id);
+        const currentPeer = currentChatPeerId ? parseInt(currentChatPeerId) : null;
+
         // If the chat modal is open and the message is from the currently selected student
-        if (!teacherChatModal.classList.contains('hidden') && msg.sender_id === currentChatPeerId) {
+        if (!teacherChatModal.classList.contains('hidden') && senderId === currentPeer) {
             appendChatMessage(msg);
+            // Mark as read immediately in local storage if chat is open
+            localStorage.setItem(`lastRead_${senderId}`, new Date().toISOString());
         } else {
             // Increment counters
-            unreadCounts[msg.sender_id] = (unreadCounts[msg.sender_id] || 0) + 1;
+            unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
             updateTotalUnreadCount();
             renderChatStudentList();
             if (chatFab && teacherChatModal.classList.contains('hidden')) {
@@ -815,10 +831,22 @@ window.filterStudentAttendanceHistory = function(status, clickedButton) {
 
 // --- Chat Functions ---
 function updateTotalUnreadCount() {
-    totalUnreadMessages = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+    totalUnreadMessages = Object.values(unreadCounts).reduce((a, b) => a + (parseInt(b) || 0), 0);
+    
+    // Ensure element exists
+    if (!chatTotalCount) {
+        chatTotalCount = document.getElementById('chatTotalCount');
+        if (!chatTotalCount && chatFab) {
+            chatTotalCount = document.createElement('span');
+            chatTotalCount.id = 'chatTotalCount';
+            chatTotalCount.className = 'chat-fab-badge hidden';
+            chatFab.appendChild(chatTotalCount);
+        }
+    }
+
     if (chatTotalCount) {
         if (totalUnreadMessages > 0) {
-            chatTotalCount.textContent = totalUnreadMessages;
+            chatTotalCount.textContent = totalUnreadMessages > 9 ? '9+' : totalUnreadMessages;
             chatTotalCount.classList.remove('hidden');
         } else {
             chatTotalCount.classList.add('hidden');
@@ -845,9 +873,13 @@ function renderChatStudentList() {
         
         const count = unreadCounts[student.id] || 0;
         const badgeHtml = count > 0 ? `<span class="chat-badge-inline">${count}</span>` : '';
+        const avatarBadge = count > 0 ? `<span class="chat-avatar-badge"></span>` : '';
 
         item.innerHTML = `
-            <div class="chat-avatar-small">${student.name.charAt(0)}</div>
+            <div style="position: relative; margin-right: 12px;">
+                <div class="chat-avatar-small" style="margin-right: 0;">${student.name.charAt(0)}</div>
+                ${avatarBadge}
+            </div>
             <div class="chat-student-info">
                 <span class="chat-student-name">${student.name}</span>
             </div>
@@ -861,6 +893,7 @@ function renderChatStudentList() {
 function showChatStudentList() {
     chatStudentListView.classList.remove('hidden');
     chatConversationView.classList.add('hidden');
+    if(clearChatBtn) clearChatBtn.classList.add('hidden');
     backToStudentList.classList.add('hidden');
     chatHeaderTitle.textContent = "Chats";
     currentChatPeerId = null;
@@ -870,9 +903,13 @@ function openStudentChat(student) {
     currentChatPeerId = student.id;
     chatStudentListView.classList.add('hidden');
     chatConversationView.classList.remove('hidden');
+    if(clearChatBtn) clearChatBtn.classList.remove('hidden');
     backToStudentList.classList.remove('hidden');
     chatHeaderTitle.textContent = student.name;
     
+    // Set local last-read timestamp (Persistence logic copied from student)
+    localStorage.setItem(`lastRead_${student.id}`, new Date().toISOString());
+
     // Clear unread count for this student
     if (unreadCounts[student.id]) {
         unreadCounts[student.id] = 0;
@@ -909,7 +946,11 @@ function appendChatMessage(msg) {
     const messageEl = document.createElement('div');
     const isSent = msg.sender_id === currentUser.id;
     messageEl.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
-    messageEl.textContent = msg.message;
+    
+    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    messageEl.innerHTML = `<span>${msg.message}</span><small class="message-time">${time}</small>`;
+    
     teacherChatMessages.appendChild(messageEl);
 
     teacherChatMessages.scrollTop = teacherChatMessages.scrollHeight;
@@ -920,12 +961,123 @@ function sendChatMessage() {
     if (!messageText || currentChatPeerId === null) return;
 
     const messageData = { sender_id: currentUser.id, receiver_id: currentChatPeerId, message: messageText };
+    // Add timestamp for immediate display
+
+    messageData.timestamp = new Date().toISOString();
+    
     socket.emit('sendMessage', messageData);
 
     appendChatMessage(messageData);
     teacherChatInput.value = '';
 }
+
+async function fetchUnreadCounts() {
+    unreadCounts = {};
+    if (!students || students.length === 0) return;
+
+    // Fetch messages for each student to calculate unread counts based on local timestamp
+    // This matches the student dashboard notification logic exactly
+    await Promise.all(students.map(async (student) => {
+        try {
+            const messages = await apiFetch(`${API_BASE}/messages/${currentUser.id}/${student.id}`);
+            const lastRead = localStorage.getItem(`lastRead_${student.id}`);
+            
+            let count = 0;
+            if (messages && messages.length > 0) {
+                if (lastRead) {
+                    count = messages.filter(m => m.sender_id === student.id && new Date(m.timestamp) > new Date(lastRead)).length;
+                } else {
+                    count = messages.filter(m => m.sender_id === student.id).length;
+                }
+            }
+            if (count > 0) unreadCounts[student.id] = count;
+        } catch (e) { console.error(e); }
+    }));
+
+    updateTotalUnreadCount();
+    renderChatStudentList();
+}
+
+window.clearCurrentChat = async function() {
+    if (currentChatPeerId === null || currentChatPeerId === undefined) return;
+    
+    if (currentUser.id === undefined || currentUser.id === null) {
+        alert('Session invalid. Please log in again.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to clear the chat history with this student? This cannot be undone.')) return;
+
+    try {
+        await apiFetch(`${API_BASE}/messages/${currentUser.id}/${currentChatPeerId}`, { method: 'DELETE' });
+        teacherChatMessages.innerHTML = '<p class="chat-placeholder">Chat history cleared.</p>';
+    } catch (error) {
+        console.error('Error clearing chat:', error);
+        alert('Failed to clear chat history.');
+    }
+}
 // --- Add Test Score Functions ---
+window.addTestScore = async function() {
+    console.log("Add Test Score button clicked"); // Debugging check
+    const studentId = document.getElementById('testStudentId').value;
+    const testDate = document.getElementById('testDate').value;
+    const tamil = document.getElementById('tamilScore').value;
+    const english = document.getElementById('englishScore').value;
+    const maths = document.getElementById('mathsScore').value;
+    const science = document.getElementById('scienceScore').value;
+    const social = document.getElementById('socialScore').value;
+    const msgEl = document.getElementById('testScoreMessage');
+
+    if (!studentId || !testDate) {
+        msgEl.style.color = '#dc3545';
+        msgEl.textContent = '⚠️ Please select a student and a date.';
+        return;
+    }
+
+    const scores = {
+        tamil: parseInt(tamil, 10),
+        english: parseInt(english, 10),
+        maths: parseInt(maths, 10),
+        science: parseInt(science, 10),
+        social: parseInt(social, 10)
+    };
+
+    // Validate scores
+    for (const [subject, score] of Object.entries(scores)) {
+        if (isNaN(score) || score < 0 || score > 100) {
+            msgEl.style.color = '#dc3545';
+            msgEl.textContent = `⚠️ Invalid score for ${subject}. Must be between 0 and 100.`;
+            return;
+        }
+    }
+
+    try {
+        msgEl.style.color = '#007bff';
+        msgEl.textContent = 'Submitting...';
+
+        await apiFetch(`${API_BASE}/test-scores`, {
+            method: 'POST',
+            body: JSON.stringify({
+                student_id: parseInt(studentId), // Ensure integer
+                test_date: testDate,
+                ...scores
+            })
+        });
+
+        msgEl.style.color = '#28a745';
+        msgEl.textContent = '✅ Score added successfully! Notification sent to student.';
+
+        // Clear form fields after successful submission
+        ['testStudentId', 'testStudentName', 'testDate', 'tamilScore', 'englishScore', 'mathsScore', 'scienceScore', 'socialScore'].forEach(id => document.getElementById(id).value = '');
+        setTimeout(() => msgEl.textContent = '', 5000);
+
+    } catch (error) {
+        console.error('Error adding test score:', error);
+        msgEl.style.color = '#dc3545';
+        msgEl.textContent = '❌ Failed to add score. Please try again.';
+    }
+};
+
 function populateTestStudentDropdown() {
     const select = document.getElementById('testStudentName');
     if (!select) return;
