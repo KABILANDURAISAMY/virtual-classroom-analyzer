@@ -127,9 +127,15 @@
             color: var(--text-secondary);
             transition: color 0.2s;
         }
+        .input-wrapper .toggle-password {
+            left: auto;
+            right: 16px;
+            cursor: pointer;
+            z-index: 2;
+        }
         .form-control {
             width: 100%;
-            padding: 12px 16px 12px 44px;
+            padding: 12px 40px 12px 44px;
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             font-size: 1rem;
@@ -322,6 +328,7 @@
                 <div class="input-wrapper">
                     <input type="password" id="password" class="form-control" placeholder="••••••••" required>
                     <i class="fas fa-lock"></i>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
                 </div>
             </div>
 
@@ -341,6 +348,15 @@
         const errorText = document.getElementById('errorText');
         const loginCard = document.getElementById('loginCard');
         const pageLight = document.getElementById('pageLight');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -366,7 +382,8 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                const text = await response.text();
+                const data = text ? JSON.parse(text) : {};
 
                 if (data.success) {
                     // Glowing bulb success animation

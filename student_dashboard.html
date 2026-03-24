@@ -10,131 +10,25 @@
     <link rel="stylesheet" href="student_dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-color: #f4f6f8;
-            --surface: #ffffff;
-            --text-main: #0f172a;
-            --text-card: #1e293b;
-            --primary: #1e40af;
-            --primary-hover: #1e3a8a;
-            --accent: #0284c7;
-            --border-color: #e3e8ef;
-            --shadow-card: 0 2px 4px rgba(0,0,0,0.05);
-            --radius: 6px;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            color: var(--text-main);
-        }
-
-        .main-wrapper { max-width: 1400px; margin: 0 auto; padding: 20px; }
-
-        /* Header */
-        .top-header {
-            background: #1e40af;
-            border-radius: 0; padding: 0; /* Padding handled by content */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-bottom: none;
-            margin-bottom: 2rem;
-            display: block; /* changed from flex to block to allow full width */
-        }
-        .header-content {
-            max-width: 100%;
-            padding: 1.5rem 2rem;
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .logo-section { display: flex; align-items: center; gap: 1rem; }
-        .logo-icon { font-size: 2.2rem; color: #fff; }
-        .logo-section h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: #fff; }
-        .logo-section p { margin: 4px 0 0 0; color: #bfdbfe; font-size: 0.95rem; }
-
-        /* Grid & Cards */
-        .dashboard-grid {
-            display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem;
-        }
-        .dashboard-card {
-            background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
-            box-shadow: var(--shadow-card); border: 1px solid var(--border-color);
-            transition: transform 0.3s ease; display: flex; flex-direction: column;
-            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-        }
-        .dashboard-card:hover { transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1); border-color: var(--primary); }
-        
-        .dashboard-card h3 {
-            margin-top: 0; display: flex; align-items: center; gap: 0.75rem; letter-spacing: -0.5px;
-            color: var(--text-main); font-size: 1.2rem; border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 1rem; margin-bottom: 1rem;
-        }
-        .dashboard-card h3 i { 
-            width: 42px; height: 42px; min-width: 42px;
-            background: #eff6ff;
-            color: var(--primary);
-            border-radius: 4px;
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.4s ease;
-        }
-        .dashboard-card:hover h3 i {
-            transform: scale(1.1) rotate(-6deg);
-            background: var(--primary); color: white; border-radius: 50%;
-        }
-
-        /* Specific Grid Areas */
-        .chat-section { grid-column: span 4; animation-delay: 0.1s; }
-        .notifications-section { grid-column: span 4; animation-delay: 0.15s; }
-        .attendance-section { grid-column: span 4; animation-delay: 0.2s; }
-        .scores-section { grid-column: span 6; min-height: 300px; animation-delay: 0.25s; }
-        .ranking-section { grid-column: span 6; min-height: 300px; animation-delay: 0.3s; }
-        .tasks-section { grid-column: span 6; animation-delay: 0.35s; }
-        .materials-section { grid-column: span 6; animation-delay: 0.4s; }
-
-        @media (max-width: 1024px) {
-            .dashboard-grid { display: flex; flex-direction: column; }
-        }
-
-        /* Buttons */
-        .action-btn {
-            background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem;
-            border-radius: 4px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            text-align: center; text-decoration: none; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .action-btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
-        .logout-button {
-            background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); padding: 0.5rem 1.2rem;
-            border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.2s;
-        }
-        .logout-button:hover { background: rgba(255, 255, 255, 0.2); }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </head>
 <body>
     <div class="main-wrapper">
         <header class="top-header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <i class="fas fa-graduation-cap logo-icon"></i>
-                    <div>
-                        <h1>Student Dashboard</h1>
-                        <p>Welcome back!</p>
-                    </div>
+            <div class="logo-section">
+                <i class="fas fa-graduation-cap logo-icon"></i>
+                <div>
+                    <h1>Student Dashboard</h1>
+                    <p>Welcome back!</p>
                 </div>
-                <div class="user-profile">
-                    <div class="user-info">
-                        <span class="user-name">Student</span>
-                        <span class="user-email">student@example.com</span>
-                    </div>
-                    <button id="logoutButton" class="logout-button" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
+            </div>
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-name">Student</span>
+                    <span class="user-email">student@example.com</span>
                 </div>
+                <button id="logoutButton" class="logout-button" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </header>
 

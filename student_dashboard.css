@@ -10,20 +10,14 @@ body {
 
 /* Header */
 .top-header {
-    background: #ffffff;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    padding: 20px 40px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header-content {
-    max-width: 1400px;
-    margin: 0 auto;
+    background: #1e40af;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    color: white;
 }
 
 .logo-section {
@@ -34,19 +28,19 @@ body {
 
 .logo-icon {
     font-size: 2.5rem;
-    color: #4f46e5;
+    color: #fff;
 }
 
 .logo-section h1 {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #fff;
 }
 
 .logo-section p {
     margin: 0;
-    color: #64748b;
+    color: #bfdbfe;
     font-size: 0.9rem;
 }
 
@@ -63,20 +57,21 @@ body {
 .user-name {
     display: block;
     font-weight: 600;
-    color: #1e293b;
+    color: #fff;
 }
 
 .user-email {
     font-size: 0.85rem;
-    color: #64748b;
+    color: #bfdbfe;
 }
 
 .logout-button {
-    background: #fee2e2;
-    color: #ef4444;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     border: none;
-    padding: 10px 20px;
-    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
@@ -87,8 +82,7 @@ body {
 }
 
 .logout-button:hover {
-    background: #ef4444;
-    color: white;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Dashboard Grid */

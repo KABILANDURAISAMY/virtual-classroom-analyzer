@@ -223,7 +223,11 @@ async function apiFetch(url, options = {}) {
     if (!response.ok) {
         throw new Error(`API request failed: ${response.statusText}`);
     }
-    return response.json();
+    const text = await response.text();
+    if (!text) {
+        return {};
+    }
+    return JSON.parse(text);
 }
 
 // --- Notification Functions ---
