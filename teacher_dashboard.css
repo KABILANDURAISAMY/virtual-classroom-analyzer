@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 :root {
     --primary-color: #4f46e5;
     --primary-color-hover: #4338ca;
@@ -5,12 +7,12 @@
     --danger-color: #ef4444;
     --warning-color: #f59e0b;
 
-    --bg-color: #f9fafb;
+    --bg-color: #eef2f6;
     --card-bg: #ffffff;
-    --sidebar-bg: #1f2937;
-    --sidebar-text: #d1d5db;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7281;
+    --sidebar-bg: #111827;
+    --sidebar-text: #9ca3af;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
     --border-color: #e5e7eb;
     --chat-bg: #ffffff;
 }
@@ -19,7 +21,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 body {
@@ -61,8 +63,9 @@ body {
 }
 
 .sidebar-header h2 {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
 }
 
 .close-sidebar {
@@ -86,6 +89,7 @@ body {
     color: var(--sidebar-text);
     text-decoration: none;
     transition: background 0.2s;
+    font-weight: 500;
 }
 
 .menu-link span, .menu-link i:first-child {
@@ -114,7 +118,7 @@ body {
 
 .dropdown-content a {
     display: block;
-    padding: 10px 20px 10px 55px;
+    padding: 12px 20px 12px 55px;
     color: var(--sidebar-text);
     text-decoration: none;
     font-size: 0.9rem;
@@ -153,7 +157,7 @@ body {
 
 .top-bar {
     background-color: white;
-    padding: 15px 30px;
+    padding: 20px 30px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -161,8 +165,8 @@ body {
 }
 
 .top-bar h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
     margin-left: 16px;
 }
 
@@ -234,16 +238,17 @@ body {
 .student-card {
     background: var(--card-bg);
     padding: 20px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--border-color);
     text-align: center;
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .student-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .student-avatar {

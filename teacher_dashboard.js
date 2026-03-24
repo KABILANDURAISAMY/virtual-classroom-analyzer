@@ -44,6 +44,142 @@ let logoutButton;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // Inject Google Font 'Inter' for a more professional dashboard look
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-body: #eef2f6;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --border: #e3e8ef;
+            --radius: 6px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        body {
+            font-family: 'Outfit', sans-serif !important;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.5;
+        }
+        h1, h2, h3, h4, h5, h6 { color: var(--text-main); font-weight: 700; letter-spacing: -0.025em; }
+        
+        /* Card Styling */
+        .student-card, .detail-card, .task-card, .material-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            border-top: 3px solid var(--primary);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .student-card:hover, .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Form Elements */
+        input, select, textarea {
+            border: 1px solid var(--border) !important;
+            border-radius: 4px !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.95rem !important;
+            transition: border-color 0.15s ease;
+            background-color: #fff;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+        }
+
+        /* Buttons */
+        button {
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        button.primary-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+        }
+        button.primary-btn:hover { background: var(--primary-hover); }
+        
+        /* Tables */
+        .details-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .details-table th {
+            background: #f8fafc;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .details-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        .details-table tr:last-child td { border-bottom: none; }
+
+        /* Chat Improvements */
+        .message-bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 8px;
+            position: relative;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            box-shadow: var(--shadow-sm);
+        }
+        .message-bubble.sent {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message-bubble.received {
+            background: white;
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .message-time {
+            display: block;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-top: 4px;
+            text-align: right;
+        }
+    `;
+    document.head.appendChild(style);
+
     if (!token || currentUser.id === undefined) {
         alert('Authentication error. Please log in again.');
         window.location.href = 'index.html';
@@ -255,55 +391,28 @@ function renderStudentGrid() {
     students.forEach(student => {
         const card = document.createElement('div');
         card.className = 'student-card';
-        // Vibrant Soft UI Card Styling
-        card.style.cssText = `
-        
-            background: #FFFFFF;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            padding: 24px;
-            text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            border: 1px solid #00509fe1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        `;
-        card.onmouseover = function() { 
-            this.style.transform = 'translateY(-5px)'; 
-            this.style.boxShadow = '0 10px 20px rgba(0,0,0,0.07)'; 
-            this.style.borderColor = '#007BFF';
-        };
-        card.onmouseout = function() { 
-            this.style.transform = 'translateY(0)'; 
-            this.style.boxShadow = '0 4px 20px rgba(0,0,0,0.03)'; 
-            this.style.borderColor = '#DEE2E6';
-        };
-
-        // Make the entire card act as a button for better UX
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', '0');
         card.onclick = () => showStudentDetails(student.id);
         card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') showStudentDetails(student.id); };
         
         card.innerHTML = `
-            <div class="student-avatar" style="width: 72px; height: 72px; background: linear-gradient(135deg, #007BFF, #0056b3); color: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2); transform: rotate(-5deg);">
-                ${student.name.charAt(0).toUpperCase()}
+            <div class="card-header" style="display: flex; align-items: center; margin-bottom: 20px; text-align: left;">
+                <div class="student-avatar" style="width: 56px; height: 56px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; margin-right: 16px; box-shadow: inset 0 2px 4px 0 rgba(255, 255, 255, 0.3);">
+                    ${student.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 700;">${student.name}</h3>
+                    <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 0.85rem;">${student.email}</p>
+                </div>
             </div>
-            <h3 style="margin: 0 0 4px 0; color: #212529; font-size: 1.25rem; font-weight: 700;">${student.name}</h3>
-            <p style="margin: 0; color: #6C757D; font-size: 0.875rem; font-weight: 500;">ID: ${student.id}</p>
-            <p style="margin: 4px 0 20px 0; color: #94a3b8; font-size: 0.8125rem;">${student.email}</p>
-            <div class="view-details-link" style="margin-top: auto; color: #007BFF; font-weight: 600; font-size: 0.875rem; text-decoration: none; padding: 10px 24px; background: #E7F3FF; border-radius: 12px; transition: all 0.2s;">
-                View Dashboard
+            <div style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
+                <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; font-weight: 500;">ID: <span style="color: var(--text-main); font-weight: 600;">${student.id}</span></p>
+                <div class="view-details-link" style="color: #4f46e5; font-weight: 600; font-size: 0.875rem; padding: 8px 16px; background: #e0e7ff; border-radius: 8px; transition: all 0.2s;">
+                    View Details
+                </div>
             </div>
         `;
-        // Hover effect for the link button inside the card
-        const link = card.querySelector('.view-details-link');
-        card.addEventListener('mouseover', () => { link.style.background = '#007BFF'; link.style.color = '#ffffff'; });
-        card.addEventListener('mouseout', () => { link.style.background = '#E7F3FF'; link.style.color = '#007BFF'; });
         
         studentGrid.appendChild(card);
     });
@@ -325,98 +434,95 @@ window.showStudentDetails = async function(id) {
         const absentCount = attendance.length - presentCount;
         const attendancePercentage = attendance.length > 0 ? Math.round((presentCount / attendance.length) * 100) : 0;
 
-        // Helper for score color
-        const getScoreColor = (score) => {
-            if (score < 40) return '#f43f5e'; // Soft Red
-            if (score < 60) return '#f59e0b'; // Amber
-            return '#10b981'; // Emerald
+        const getScorePill = (score) => {
+            let color, bgColor;
+            if (score < 40) { color = '#ef4444'; bgColor = '#fef2f2'; }
+            else if (score < 75) { color = '#f59e0b'; bgColor = '#fffbeb'; }
+            else { color = '#10b981'; bgColor = '#ecfdf5'; }
+            return `<span style="background-color:${bgColor}; color:${color}; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.875rem;">${score}</span>`;
         };
-        const getScoreCellStyle = (score) => `padding: 12px; color: ${getScoreColor(score)}; font-weight: 600; text-align: center;`;
 
         // Filter for teacher remarks (exclude system generated ones)
         const teacherRemarks = remarks.filter(r => 
-            !(r.remark.includes('⚠️') || r.remark.includes('✅') || r.remark.includes('❌') || r.remark.includes('🕒') ||
-              r.remark.includes('📊') || r.remark.includes('ALERT') || r.remark.includes('IMPROVEMENT') ||
-              r.remark.includes('DECLINE') || r.remark.includes('LOWEST') || r.remark.includes('LATE'))
+            !(r.remark.includes('📈') || r.remark.includes('📉') || r.remark.includes('📊') || r.remark.includes('👍') || r.remark.includes('👎') || r.remark.includes('🏁') || r.remark.includes('✅') || r.remark.includes('❌') || r.remark.includes('🕒'))
         );
 
         studentDetailsContainer.innerHTML = `
-            <div class="detail-header" style="background: #FFFFFF; padding: 32px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 32px; display: flex; align-items: center; border: 1px solid #DEE2E6; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: #007BFF;"></div>
-                <div style="width: 56px; height: 56px; background: #E7F3FF; color: #007BFF; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 20px;">
+            <div class="detail-header" style="background: var(--white); padding: 32px; border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 32px; display: flex; align-items: center; border: 1px solid var(--border);">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-right: 24px; box-shadow: var(--shadow-sm);">
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div>
-                    <h2 style="margin: 0; color: #212529; font-size: 1.75rem; font-weight: 800;">${student.name}</h2>
-                    <p style="margin: 4px 0 0; color: #6C757D; font-size: 0.95rem;">Student Dashboard Overview</p>
+                    <h2 style="margin: 0; color: var(--text-main); font-size: 2rem; font-weight: 800; letter-spacing: -0.03em;">${student.name}</h2>
+                    <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 1rem;">Student Performance Overview</p>
                 </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 32px; margin-bottom: 32px;">
-                <div class="detail-card" style="background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.04); padding: 32px; border: 1px solid #f1f5f9;">
-                    <h3 style="color: #334155; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; font-size: 1.25rem; font-weight: 700;"><i class="fas fa-chart-line" style="color: #6366f1; margin-right: 12px;"></i> Test Scores</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 32px; margin-bottom: 32px;">
+                <div class="detail-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-main); margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; display:flex; align-items:center;"><i class="fas fa-chart-line" style="color: var(--info); margin-right: 12px; background:#eff6ff; padding:8px; border-radius:8px;"></i> Test Scores</h3>
                     ${scores.length > 0 ? `
-                        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-top: 16px;">
                             <thead>
                                 <tr>
-                                    <th style="padding: 16px; text-align: left; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Date</th>
-                                    <th style="padding: 16px; text-align: center; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Mat</th>
-                                    <th style="padding: 16px; text-align: center; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Sci</th>
-                                    <th style="padding: 16px; text-align: center; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Soc</th>
-                                    <th style="padding: 16px; text-align: center; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Tam</th>
-                                    <th style="padding: 16px; text-align: center; color: #6C757D; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #DEE2E6;">Eng</th>
+                                    <th>Date</th>
+                                    <th style="text-align: center;">Mat</th>
+                                    <th style="text-align: center;">Sci</th>
+                                    <th style="text-align: center;">Soc</th>
+                                    <th style="text-align: center;">Tam</th>
+                                    <th style="text-align: center;">Eng</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${scores.map(s => `
-                                    <tr style="border-bottom: 1px solid #E9ECEF; transition: background 0.2s;" onmouseover="this.style.background='#F8F9FA'" onmouseout="this.style.background='transparent'">
-                                        <td style="padding: 16px; color: #495057; font-weight: 500;">${s.test_date}</td>
-                                        <td style="${getScoreCellStyle(s.maths)}">${s.maths}</td>
-                                        <td style="${getScoreCellStyle(s.science)}">${s.science}</td>
-                                        <td style="${getScoreCellStyle(s.social)}">${s.social}</td>
-                                        <td style="${getScoreCellStyle(s.tamil)}">${s.tamil}</td>
-                                        <td style="${getScoreCellStyle(s.english)}">${s.english}</td>
+                                    <tr style="transition: background 0.2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 16px 12px; font-weight: 500;">${s.test_date}</td>
+                                        <td style="padding: 14px 12px; text-align: center;">${getScorePill(s.maths)}</td>
+                                        <td style="padding: 14px 12px; text-align: center;">${getScorePill(s.science)}</td>
+                                        <td style="padding: 14px 12px; text-align: center;">${getScorePill(s.social)}</td>
+                                        <td style="padding: 14px 12px; text-align: center;">${getScorePill(s.tamil)}</td>
+                                        <td style="padding: 14px 12px; text-align: center;">${getScorePill(s.english)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                    ` : '<p style="color: #cbd5e0; text-align: center; padding: 40px;">No scores recorded yet.</p>'}
+                    ` : '<p style="color: #9ca3af; text-align: center; padding: 40px;">No scores recorded yet.</p>'}
                 </div>
 
-                <div class="detail-card" style="background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.04); padding: 32px; border: 1px solid #f1f5f9;">
-                    <h3 style="color: #334155; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; font-size: 1.25rem; font-weight: 700;"><i class="fas fa-clock" style="color: #8b5cf6; margin-right: 12px;"></i> Attendance</h3>
+                <div class="detail-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-main); margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; display:flex; align-items:center;"><i class="fas fa-user-check" style="color: var(--primary); margin-right: 12px; background:#e0e7ff; padding:8px; border-radius:8px;"></i> Attendance</h3>
                     
-                    <div style="display: flex; justify-content: space-around; align-items: center; margin: 20px 0; text-align: center;">
-                        <div style="background: #ecfdf5; padding: 15px 25px; border-radius: 16px; min-width: 120px;">
-                            <div style="font-size: 2.5rem; font-weight: 800; color: #10b981;">${presentCount}</div>
-                            <div style="font-size: 0.8rem; color: #047857; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Present</div>
+                    <div style="display: flex; justify-content: space-around; align-items: center; margin: 24px 0; text-align: center;">
+                        <div style="background: #f0fdf4; padding: 15px 25px; border-radius: 12px; min-width: 120px; border: 1px solid #bbf7d0;">
+                            <div style="font-size: 2.25rem; font-weight: 800; color: var(--success);">${presentCount}</div>
+                            <div style="font-size: 0.8rem; color: #15803d; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Present</div>
                         </div>
-                        <div style="background: #fff1f2; padding: 15px 25px; border-radius: 16px; min-width: 120px;">
-                            <div style="font-size: 2.5rem; font-weight: 800; color: #f43f5e;">${absentCount}</div>
-                            <div style="font-size: 0.8rem; color: #BE123C; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Absent</div>
+                        <div style="background: #fff1f2; padding: 15px 25px; border-radius: 12px; min-width: 120px; border: 1px solid #fecaca;">
+                            <div style="font-size: 2.25rem; font-weight: 800; color: var(--danger);">${absentCount}</div>
+                            <div style="font-size: 0.8rem; color: #9f1239; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Absent</div>
                         </div>
                     </div>
 
-                    <div class="progress-bar" style="position: relative; background: #E9ECEF; border-radius: 9999px; height: 20px; margin-bottom: 24px; overflow: hidden;">
-                        <div class="progress-bar-fill" style="width:${attendancePercentage}%; background: #007BFF; height: 100%; transition: width 0.5s ease;"></div>
-                        <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; font-size: 0.85rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);">${attendancePercentage}% Overall</span>
+                    <div class="progress-bar" style="position: relative; background: var(--bg-body); border-radius: 9999px; height: 10px; margin-bottom: 24px; overflow: hidden;">
+                        <div class="progress-bar-fill" style="width:${attendancePercentage}%; background: var(--primary); height: 100%; transition: width 0.5s ease; border-radius: 9999px;"></div>
+                        <span style="position: absolute; right: 0; top: -24px; color: var(--text-main); font-weight: 700; font-size: 0.85rem;">${attendancePercentage}% Rate</span>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="margin: 0; color: #64748b; font-size: 0.95rem; font-weight: 600; text-transform: uppercase;">History</h4>
+                        <h4 style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">History</h4>
                         <div class="filter-buttons" style="display: flex; gap: 8px;">
-                            <button onclick="filterStudentAttendanceHistory('all', this)" class="active" style="padding: 6px 14px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">All</button>
-                            <button onclick="filterStudentAttendanceHistory('present', this)" style="padding: 6px 14px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">Present</button>
-                            <button onclick="filterStudentAttendanceHistory('absent', this)" style="padding: 6px 14px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">Absent</button>
+                            <button onclick="filterStudentAttendanceHistory('all', this)" class="active" style="padding: 6px 14px; border: 1px solid var(--border); background: var(--white); color: var(--text-secondary); border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">All</button>
+                            <button onclick="filterStudentAttendanceHistory('present', this)" style="padding: 6px 14px; border: 1px solid var(--border); background: var(--white); color: var(--text-secondary); border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">Present</button>
+                            <button onclick="filterStudentAttendanceHistory('absent', this)" style="padding: 6px 14px; border: 1px solid var(--border); background: var(--white); color: var(--text-secondary); border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">Absent</button>
                         </div>
                     </div>
-                    <div class="history-list" style="max-height: 200px; overflow-y: auto; padding-right: 5px;">
+                    <div class="history-list" style="max-height: 150px; overflow-y: auto; padding-right: 5px;">
                         ${attendance.map(a => `
-                            <div class="history-item attendance-history-item" data-status="${a.status}" style="display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f8fafc; align-items: center;">
-                                <span style="color: #6C757D; font-size: 0.9rem;"><i class="far fa-calendar-alt" style="margin-right: 10px; color: #CED4DA;"></i> ${a.attendance_date}</span>
-                                <span style="font-weight: bold; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; background-color: ${
+                            <div class="history-item attendance-history-item" data-status="${a.status}" style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f9fafb; align-items: center;">
+                                <span style="color: var(--text-main); font-size: 0.9rem;"><i class="far fa-calendar-alt" style="margin-right: 10px; color: var(--text-secondary);"></i> ${a.attendance_date}</span>
+                                <span style="font-weight: 600; padding: 3px 10px; border-radius: 999px; font-size: 0.8rem; background-color: ${
                                     a.status === 'present' ? '#dcfce7' : '#ffe4e6'
-                                }; color: ${a.status === 'present' ? '#166534' : '#be123c'};">
+                                }; color: ${a.status === 'present' ? '#166534' : '#9f1239'};">
                                     ${a.status.toUpperCase()}
                                 </span>
                             </div>
@@ -425,29 +531,28 @@ window.showStudentDetails = async function(id) {
                 </div>
             </div>
 
-            <div class="detail-card" style="background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.04); padding: 32px; border: 1px solid #f1f5f9;">
-                <h3 style="color: #334155; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; font-size: 1.25rem; font-weight: 700;"><i class="fas fa-comment-dots" style="color: #f59e0b; margin-right: 12px;"></i> Remarks</h3>
+            <div class="detail-card" style="padding: 24px;">
+                <h3 style="color: var(--text-main); margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; display:flex; align-items:center;"><i class="fas fa-comment-dots" style="color: var(--warning); margin-right: 12px; background:#fffbeb; padding:8px; border-radius:8px;"></i> Remarks & Feedback</h3>
                 
                 <div class="add-remark-form" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <input type="text" id="newRemarkInput" placeholder="Type a new remark..." style="flex: 1; padding: 12px 16px; border: 1px solid #CED4DA; border-radius: 10px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#007BFF'" onblur="this.style.borderColor='#CED4DA'">
-                    <button onclick="addRemark(${student.id})" style="background: #007BFF; color: white; border: none; padding: 0 24px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;">Add</button>
+                    <input type="text" id="newRemarkInput" placeholder="Type a new remark for ${student.name}..." style="flex: 1;">
+                    <button onclick="addRemark(${student.id})" class="primary-btn">Add</button>
                 </div>
                 
-                <h4 style="margin-bottom: 15px; color: #64748b; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Notes & Feedback</h4>
                 <div class="remarks-list">
                     ${teacherRemarks.length > 0 ? `
                         <ul style="list-style: none; padding: 0; display: grid; gap: 12px;">
                             ${teacherRemarks.map(r => `
-                                <li style="position: relative; padding: 16px; background: #F8F9FA; border-left: 4px solid #FFC107; border-radius: 8px;">
-                                    <p style="margin:0 0 8px 0; color: #495057; line-height: 1.6;">${r.remark}</p>
-                                    <small style="color: #6C757D;"><i class="far fa-clock"></i> ${new Date(r.created_at).toLocaleString()}</small>
-                                    <button onclick="deleteRemark('${r._id}', ${student.id})" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); background: #F8D7DA; color: #721C24; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete Remark" onmouseover="this.style.background='#DC3545'; this.style.color='#fff';" onmouseout="this.style.background='#F8D7DA'; this.style.color='#721C24';">
+                                <li style="position: relative; padding: 16px; background: #f8fafc; border-left: 4px solid var(--warning); border-radius: 8px;">
+                                    <p style="margin:0 0 8px 0; color: var(--text-main); line-height: 1.6;">${r.remark}</p>
+                                    <small style="color: var(--text-secondary);"><i class="far fa-clock"></i> ${new Date(r.created_at).toLocaleString()}</small>
+                                    <button onclick="deleteRemark('${r._id}', ${student.id})" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); background: #fee2e2; color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete Remark" onmouseover="this.style.background='var(--danger)'; this.style.color='var(--white)';" onmouseout="this.style.background='#fee2e2'; this.style.color='var(--danger)';">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </li>
                             `).join('')}
                         </ul>
-                    ` : '<p style="color: #a0aec0; font-style: italic; text-align: center; padding: 20px;">No remarks found.</p>'}
+                    ` : '<p style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No manual remarks or feedback added yet.</p>'}
                 </div>
             </div>
         `;
@@ -609,9 +714,9 @@ function generateSingleSubjectChart(subject, studentsData, scoresData) {
         return;
     }
 
-    const gradient = ctx.createLinearGradient(0, 0, 400, 0);
-    gradient.addColorStop(0, '#6366f1'); // Indigo
-    gradient.addColorStop(1, '#8b5cf6'); // Violet
+    const gradient = ctx.createLinearGradient(0, 400, 0, 0); // Vertical Gradient
+    gradient.addColorStop(0, '#4f46e5'); // Indigo
+    gradient.addColorStop(1, '#a855f7'); // Purple
 
     // Calculate average for each student in the selected subject
     const studentAverages = studentsData.map(student => {
@@ -640,32 +745,37 @@ function generateSingleSubjectChart(subject, studentsData, scoresData) {
             datasets: [{
                 label: `Average Mark`,
                 data: studentAverages.map(s => s.avg),
-                backgroundColor: 'rgba(16, 185, 129, 0.75)',
-                borderRadius: 20,
+                backgroundColor: gradient,
+                borderRadius: 8,
+                barPercentage: 0.6,
+                hoverBackgroundColor: '#818cf8'
             }]
         },
         options: {
-            indexAxis: 'y', // This makes it a horizontal bar chart
             responsive: true,
             maintainAspectRatio: false,
             plugins: { 
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { family: 'Outfit', size: 14 },
+                    bodyFont: { family: 'Outfit', size: 13 },
                     callbacks: {
                         label: (context) => `${context.dataset.label}: ${context.raw}%`
                     }
                 }
             },
             scales: {
-                x: { 
+                y: { 
                     beginAtZero: true, 
                     max: 100, 
-                    grid: { display: false },
-                    title: { display: true, text: 'Average Score (%)', font: { weight: '600' } } 
-                },
-                y: { 
                     grid: { borderDash: [5, 5], color: '#f1f5f9' },
-                    ticks: { font: { weight: '500' } }
+                    title: { display: true, text: 'Average Score (%)', font: { family: 'Outfit', weight: '600' } },
+                    ticks: { font: { family: 'Outfit' } }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { font: { family: 'Outfit', weight: '500' } }
                 }
             }
         }
@@ -679,27 +789,28 @@ async function loadAttendanceList(showLoading = true) {
     if (showLoading !== false) {
         container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
     }
-
+    
     try {
         // Fetch existing attendance records for the selected date
         const attendanceRecords = await apiFetch(`${API_BASE}/attendance/date/${date}`);
-        const statusMap = {};
+        let statusMap = {};
         attendanceRecords.forEach(r => statusMap[r.student_id] = r.status);
         tempAttendanceData = statusMap; // Sync local state with DB
 
         container.innerHTML = students.map(student => {
             const status = tempAttendanceData[student.id];
             return `
-            <div id="att-row-${student.id}" style="background:white; padding:20px; border-radius:16px; border:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.01); transition: all 0.2s; margin-bottom: 12px;">
-                <div>
-                    <strong style="color:#1e293b; font-size:1.1rem;">${student.name}</strong> <span style="color:#94a3b8; font-size:0.9rem; margin-left: 8px;">#${student.id}</span>
+            <div id="att-row-${student.id}" style="background:white; padding:20px; border-radius:12px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; box-shadow: var(--shadow-sm); transition: all 0.2s; margin-bottom: 12px;">
+                <div style="display:flex; align-items:center;">
+                    <div style="width: 44px; height: 44px; background: var(--bg-body); color: var(--text-main); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 16px;">${student.name.charAt(0)}</div>
+                    <div>
+                        <strong style="color:var(--text-main); font-size:1rem;">${student.name}</strong>
+                        <span style="color:var(--text-secondary); font-size:0.85rem; display:block;">ID: ${student.id}</span>
+                    </div>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button onclick="markStudentAttendance(${student.id}, 'present')" style="padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; ${status === 'present' ? 'background:#10b981; color:white; box-shadow:0 4px 10px rgba(16,185,129,0.3);' : 'background:#f1f5f9; color:#64748b;'}">Present</button>
-                    <button onclick="markStudentAttendance(${student.id}, 'absent')" style="padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; ${status === 'absent' ? 'background:#f43f5e; color:white; box-shadow:0 4px 10px rgba(244,63,94,0.3);' : 'background:#f1f5f9; color:#64748b;'}">Absent</button>
-                    <button onclick="saveStudentAttendance(${student.id})" style="padding:8px 16px; border:none; border-radius:8px; cursor:pointer; font-weight:600; transition:all 0.2s; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; box-shadow:0 4px 10px rgba(79, 70, 229, 0.3);" title="Save Attendance">
-                        <i class="fas fa-save"></i>
-                    </button>
+                    <button onclick="markStudentAttendance(${student.id}, 'present')" style="padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; ${status === 'present' ? 'background:var(--success); color:white; border-color:var(--success);' : 'background:transparent; color:var(--text-secondary); border-color:var(--border);'}"><i class="fas fa-check" style="margin-right: 6px;"></i> Present</button>
+                    <button onclick="markStudentAttendance(${student.id}, 'absent')" style="padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; ${status === 'absent' ? 'background:var(--danger); color:white; border-color:var(--danger);' : 'background:transparent; color:var(--text-secondary); border-color:var(--border);'}"><i class="fas fa-times" style="margin-right: 6px;"></i> Absent</button>
                 </div>
             </div>
             `;
@@ -722,11 +833,11 @@ window.markStudentAttendance = function(studentId, status) {
         const absentBtn = btns[1];
 
         if (status === 'present') {
-            presentBtn.style.cssText = "padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:#10b981; color:white; box-shadow:0 4px 10px rgba(16,185,129,0.3);";
-            absentBtn.style.cssText = "padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:#f1f5f9; color:#64748b;";
+            presentBtn.style.cssText = "padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:var(--success); color:white; border-color:var(--success);";
+            absentBtn.style.cssText = "padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:transparent; color:var(--text-secondary); border-color:var(--border);";
         } else {
-            presentBtn.style.cssText = "padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:#f1f5f9; color:#64748b;";
-            absentBtn.style.cssText = "padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:#f43f5e; color:white; box-shadow:0 4px 10px rgba(244,63,94,0.3);";
+            presentBtn.style.cssText = "padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:transparent; color:var(--text-secondary); border-color:var(--border);";
+            absentBtn.style.cssText = "padding:8px 20px; border:1px solid; border-radius:8px; cursor:pointer; font-weight:600; font-size: 0.9rem; transition:all 0.2s; background:var(--danger); color:white; border-color:var(--danger);";
         }
     }
 }
@@ -943,8 +1054,8 @@ function appendChatMessage(msg) {
     const placeholder = teacherChatMessages.querySelector('.chat-placeholder, .loading-spinner');
     if (placeholder) placeholder.remove();
 
-    const messageEl = document.createElement('div');
     const isSent = msg.sender_id === currentUser.id;
+    const messageEl = document.createElement('div');
     messageEl.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
     
     const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1123,17 +1234,17 @@ function renderTasks() {
     }
 
     tasksList.innerHTML = tasks.map(task => `
-        <div style="background:white;padding:24px;border-radius:16px;border-left:5px solid #6366f1;box-shadow:0 4px 6px rgba(0,0,0,0.05); margin-bottom: 16px; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="task-card" style="padding: 24px; margin-bottom: 16px; border-left: 4px solid var(--primary);">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
-                <h4 style="color:#1e293b;margin:0;font-family:'Segoe UI',sans-serif;font-size:1.2rem;font-weight:700;"><i class="fas fa-check-circle" style="color:#6366f1;margin-right:10px;"></i> ${task.name}</h4>
-                <button onclick="deleteTask('${task._id}')" style="background:#fff;color:#ef4444;border:1px solid #fee2e2;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;transition:all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff'">
+                <h4 style="color:var(--text-main); margin:0; font-size:1.1rem; font-weight:700;"><i class="fas fa-tasks" style="color:var(--primary); margin-right:10px;"></i> ${task.name}</h4>
+                <button onclick="deleteTask('${task._id}')" style="background:transparent; color:var(--danger); border:1px solid #fecaca; padding:6px 12px; border-radius:6px; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='#fef2f2'">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
-            <p style="color:#64748b;margin:12px 0;line-height:1.6;font-size:0.95rem;">${task.description}</p>
+            <p style="color:var(--text-secondary); margin:12px 0; line-height:1.6; font-size:0.95rem;">${task.description}</p>
             <div style="display:flex;gap:20px;margin-top:15px;">
-                <span style="color:#6366f1;font-weight:600;font-size:0.9rem;background:#e0e7ff;padding:6px 12px;border-radius:8px;"><i class="fas fa-calendar" style="margin-right:5px;"></i> ${task.due_date}</span>
-                <span style="color:#0ea5e9;font-weight:600;font-size:0.9rem;background:#e0f2fe;padding:6px 12px;border-radius:8px;"><i class="fas fa-clock" style="margin-right:5px;"></i> ${task.due_time}</span>
+                <span style="color:var(--primary); font-weight:600; font-size:0.85rem; background:#e0e7ff; padding:6px 12px; border-radius:6px;"><i class="fas fa-calendar" style="margin-right:5px;"></i> ${task.due_date}</span>
+                <span style="color:#0ea5e9; font-weight:600; font-size:0.85rem; background:#e0f2fe; padding:6px 12px; border-radius:6px;"><i class="fas fa-clock" style="margin-right:5px;"></i> ${task.due_time}</span>
             </div>
         </div>
     `).join('');
@@ -1218,16 +1329,16 @@ function renderStudyMaterials() {
     }
 
     list.innerHTML = studyMaterials.map(material => `
-        <div style="background:white;padding:24px;border-radius:16px;border-left:5px solid #a855f7;box-shadow:0 4px 6px rgba(0,0,0,0.05); margin-bottom: 16px;">
+        <div class="material-card" style="padding: 24px; margin-bottom: 16px; border-left: 4px solid #a855f7;">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
-                <h4 style="color:#1e293b;margin:0;font-family:'Segoe UI',sans-serif;font-size:1.2rem;font-weight:700;"><i class="fas fa-book" style="color:#a855f7;margin-right:10px;"></i> ${material.name}</h4>
-                <button onclick="deleteStudyMaterial('${material._id}')" style="background:#fff;color:#ef4444;border:1px solid #fee2e2;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;transition:all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff'">
+                <h4 style="color:var(--text-main); margin:0; font-size:1.1rem; font-weight:700;"><i class="fas fa-book" style="color:#a855f7; margin-right:10px;"></i> ${material.name}</h4>
+                <button onclick="deleteStudyMaterial('${material._id}')" style="background:transparent; color:var(--danger); border:1px solid #fecaca; padding:6px 12px; border-radius:6px; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='#fef2f2'">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
-            <p style="color:#64748b;margin:12px 0;line-height:1.6;font-size:0.95rem;">${material.description}</p>
+            <p style="color:var(--text-secondary); margin:12px 0; line-height:1.6; font-size:0.95rem;">${material.description}</p>
             <div style="margin-top:15px;">
-                <a href="${material.link}" target="_blank" style="display:inline-block;background:#f3e8ff;color:#7e22ce;font-weight:600;text-decoration:none;padding:8px 20px;border-radius:10px;transition:all 0.2s;"><i class="fas fa-external-link-alt" style="margin-right:5px;"></i> View Material</a>
+                <a href="${material.link}" target="_blank" style="display:inline-block; background:#f3e8ff; color:#7e22ce; font-weight:600; text-decoration:none; padding:8px 20px; border-radius:8px; font-size:0.9rem; transition:all 0.2s;"><i class="fas fa-external-link-alt" style="margin-right:5px;"></i> View Material</a>
             </div>
         </div>
     `).join('');

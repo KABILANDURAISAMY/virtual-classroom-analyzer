@@ -15,6 +15,75 @@ let logoutButton;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Inject Google Font 'Inter' for professional look
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        :root {
+            --primary: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        body {
+            font-family: 'Outfit', sans-serif !important;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+        }
+        h1, h2, h3, h4 { letter-spacing: -0.02em; }
+        
+        /* Enhanced Card Style */
+        .notification-item, .task-item, .material-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+            transition: all 0.2s ease;
+        }
+        .notification-item:hover, .task-item:hover, .material-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Modern Chat Bubbles */
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 8px;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .message-bubble.sent {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message-bubble.received {
+            background: white;
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* Buttons */
+        button { cursor: pointer; transition: opacity 0.2s; }
+        button:active { transform: scale(0.98); }
+    `;
+    document.head.appendChild(style);
+
     if (!token || currentUser.role !== 'student') {
         alert('Authentication error or invalid role. Please log in again.');
         window.location.href = 'index.html';
@@ -180,27 +249,57 @@ function renderNotifications() {
     }
 
     notificationList.innerHTML = notifications.map((notif, index) => {
-        const { className, icon } = getNotificationStyle(notif.remark);
+        const { color, icon } = getNotificationStyle(notif.remark);
+        
+        let title = 'Notification';
+        let message = notif.remark;
+
+        if (message.includes('OVERALL:')) {
+            title = 'Score Update';
+        } else if (message.includes('ABSENT')) {
+            title = 'Attendance Alert';
+        } else if (message.includes('LATE') || message.includes('ON TIME')) {
+            title = 'Attendance Update';
+        } else if (message.includes('Task')) {
+            title = 'New Task';
+        } else if (message.includes('Material')) {
+            title = 'New Material';
+        } else if (message.includes('message')) {
+            title = 'New Message';
+        }
+
         return `
-            <div class="notification-item ${className}">
-                <div class="notif-header">
-                    <p><i class="fas ${icon} icon"></i> ${notif.remark}</p>
-                    <button class="delete-notif-btn" onclick="deleteNotification(${index})" title="Dismiss"><i class="fas fa-times"></i></button>
+            <div class="notification-item" style="background: var(--bg-surface); border-left: 4px solid ${color}; border-radius: 12px; margin-bottom: 12px; padding: 18px; display: flex; align-items: flex-start;">
+                <div class="notif-icon" style="color: ${color}; margin-right: 16px; font-size: 1.2rem; width: 30px; text-align: center; padding-top: 2px;">
+                    <i class="fas ${icon}"></i>
                 </div>
-                <small>${new Date(notif.created_at).toLocaleString()}</small>
+                <div class="notif-content" style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0 0 4px; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">${title}</h4>
+                        <button class="delete-notif-btn" onclick="deleteNotification(${index})" title="Dismiss" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p style="margin: 0 0 8px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">${message}</p>
+                    <small style="font-size: 0.75rem; color: #9ca3af;">${new Date(notif.created_at).toLocaleString()}</small>
+                </div>
             </div>
         `;
     }).join('');
 }
 
 function getNotificationStyle(remark) {
-    if (remark.includes('ABSENT')) return { className: 'remark-absent', icon: 'fa-user-slash' };
-    if (remark.includes('LATE')) return { className: 'remark-late', icon: 'fa-clock' };
-    if (remark.includes('ON TIME')) return { className: 'remark-ontime', icon: 'fa-check-circle' };
-    if (remark.includes('score')) return { className: 'remark-score', icon: 'fa-chart-line' };
-    if (remark.includes('Task')) return { className: 'remark-task', icon: 'fa-tasks' };
-    if (remark.includes('Material')) return { className: 'remark-material', icon: 'fa-book' };
-    return { className: 'remark-general', icon: 'fa-info-circle' };
+    // Use keywords for styling: 📈 📉 📊 👍 👎 🏁 ✅ ❌ 🕒 📝 📚 💬
+    if (remark.includes('📈') || remark.includes('IMPROVEMENT')) return { color: 'var(--success)', icon: 'fa-arrow-trend-up' };
+    if (remark.includes('📉') || remark.includes('DECLINE')) return { color: 'var(--danger)', icon: 'fa-arrow-trend-down' };
+    if (remark.includes('📊') || remark.includes('STEADY')) return { color: 'var(--info)', icon: 'fa-chart-line' };
+    if (remark.includes('ABSENT')) return { color: 'var(--danger)', icon: 'fa-user-slash' };
+    if (remark.includes('LATE')) return { color: 'var(--warning)', icon: 'fa-clock' };
+    if (remark.includes('ON TIME')) return { color: 'var(--success)', icon: 'fa-check-circle' };
+    if (remark.includes('Task') || remark.includes('📝')) return { color: 'var(--purple)', icon: 'fa-tasks' };
+    if (remark.includes('Material') || remark.includes('📚')) return { color: '#a855f7', icon: 'fa-book' };
+    if (remark.includes('message') || remark.includes('💬')) return { color: 'var(--sky)', icon: 'fa-comments' };
+    return { color: 'var(--text-light)', icon: 'fa-info-circle' };
 }
 
 window.deleteNotification = async function(index) {
@@ -230,23 +329,23 @@ async function fetchScores() {
     try {
         studentScores = await apiFetch(`${API_BASE}/test-scores/${currentUser.id}`);
         if(studentScores.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No scores available.</p>';
+            container.innerHTML = '<p style="text-align:center; color:var(--text-light); padding:20px;">No scores available.</p>';
             return;
         }
         
         container.innerHTML = `
-            <table class="mini-table">
-                <thead><tr><th>Date</th><th>Avg</th><th>Action</th></tr></thead>
+            <table class="mini-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+                <thead><tr><th style="text-align:left; color:#94a3b8; font-weight:600; padding:0 10px;">Date</th><th style="color:#94a3b8; font-weight:600;">Average</th><th></th></tr></thead>
                 <tbody>
                     ${studentScores.map((s, index) => {
                         const avg = Math.round((s.maths + s.science + s.social + s.tamil + s.english) / 5);
-                        const color = avg >= 80 ? '#d1fae5' : (avg >= 50 ? '#fef3c7' : '#fee2e2');
-                        const text = avg >= 80 ? '#065f46' : (avg >= 50 ? '#92400e' : '#991b1b');
+                        const bgColor = avg >= 75 ? '#dcfce7' : (avg >= 40 ? '#fef3c7' : '#fee2e2');
+                        const textColor = avg >= 75 ? '#15803d' : (avg >= 40 ? '#b45309' : '#b91c1c');
                         return `
-                            <tr>
-                                <td>${s.test_date}</td>
-                                <td><span class="score-pill" style="background:${color}; color:${text}">${avg}%</span></td>
-                                <td><button class="view-btn" onclick="openScoreModal(${index})">View Mark</button></td>
+                            <tr style="background:white; box-shadow:0 1px 2px rgba(0,0,0,0.05); border-radius:8px;">
+                                <td style="padding:12px; border-radius:8px 0 0 8px; font-weight:500;">${s.test_date}</td>
+                                <td style="text-align:center;"><span class="score-pill" style="background:${bgColor}; color:${textColor}; padding:4px 12px; border-radius:20px; font-weight:700; font-size:0.85rem;">${avg}%</span></td>
+                                <td style="text-align:right; padding-right:12px; border-radius:0 8px 8px 0;"><button class="view-btn" onclick="openScoreModal(${index})" style="background:transparent; color:#4f46e5; border:none; font-weight:600; font-size:0.85rem;">View</button></td>
                             </tr>
                         `;
                     }).join('')}
@@ -268,7 +367,7 @@ async function fetchRankings() {
         ]);
         
         if (allScores.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#94a3b8;">No data for rankings.</p>';
+            container.innerHTML = '<p style="text-align:center;color:var(--text-light);">No data for rankings.</p>';
             return;
         }
 
@@ -296,7 +395,7 @@ async function fetchRankings() {
         });
 
         // 2. Calculate Rankings for each subject
-        let rankingHtml = '<table class="mini-table"><thead><tr><th>Subject</th><th>My Avg</th><th>Rank</th><th>1st Rank Holder</th></tr></thead><tbody>';
+        let rankingHtml = '<table class="mini-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;"><thead><tr><th style="text-align:left; color:#94a3b8; padding:0 10px;">Subject</th><th>My Avg</th><th>Rank</th><th style="text-align:right; padding-right:10px;">Topper</th></tr></thead><tbody>';
 
         subjects.forEach(subject => {
             // Create an array of {id, avg} for this subject
@@ -327,11 +426,11 @@ async function fetchRankings() {
                 const topDisplay = topStudent.id === currentUser.id ? 'You' : topName;
 
                 rankingHtml += `
-                    <tr>
-                        <td style="text-transform:capitalize; font-weight:600;">${subject}</td>
-                        <td>${myStat.avg}%</td>
-                        <td><span class="rank-badge ${badgeClass}"><i class="fas ${icon}"></i> #${rank}</span></td>
-                        <td><small style="color:#64748b; font-weight:600;">${topDisplay} (${topStudent.avg}%)</small></td>
+                    <tr style="background:white; box-shadow:0 1px 2px rgba(0,0,0,0.05); border-radius:8px;">
+                        <td style="text-transform:capitalize; font-weight:600; padding:12px; border-radius:8px 0 0 8px;">${subject}</td>
+                        <td style="text-align:center; font-weight:500;">${myStat.avg}%</td>
+                        <td style="text-align:center;"><span class="rank-badge ${badgeClass}" style="font-size:0.85rem; padding:4px 8px; border-radius:6px; background:#f1f5f9;"><i class="fas ${icon}" style="margin-right:4px;"></i> ${rank}</span></td>
+                        <td style="text-align:right; padding:12px; border-radius:0 8px 8px 0;"><small style="color:#64748b; font-weight:600;">${topDisplay} (${topStudent.avg}%)</small></td>
                     </tr>
                 `;
             }
@@ -387,15 +486,15 @@ async function fetchAttendance() {
                 <div class="att-label">Attendance Rate</div>
             </div>
             <div class="att-btn-container">
-                <button class="att-btn present" onclick="filterAttendance('present')">
+                <button class="att-btn present-btn" onclick="filterAttendance('present')">
                     <i class="fas fa-check"></i> Present (${present})
                 </button>
-                <button class="att-btn absent" onclick="filterAttendance('absent')">
+                <button class="att-btn absent-btn" onclick="filterAttendance('absent')">
                     <i class="fas fa-times"></i> Absent (${absent})
                 </button>
             </div>
             <div id="attendanceDetailsList" class="att-details-list">
-                <p style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:10px;">Select a status above to view details.</p>
+                <p style="text-align:center; color:var(--text-light); font-size:0.85rem; padding:10px;">Select a status above to view details.</p>
             </div>
         `;
     } catch(e) { console.error(e); }
@@ -411,8 +510,7 @@ window.filterAttendance = function(status) {
         <div class="att-record">
             <strong><i class="far fa-calendar-alt"></i> ${a.attendance_date}</strong>
             ${status === 'present' ? `<span><i class="far fa-clock"></i> ${a.attendance_time || 'N/A'}</span>` : ''}
-        </div>
-    `).join('') : `<p style="text-align:center; padding:15px; color:#94a3b8; font-size:0.9rem;">No records found for ${status}.</p>`;
+        </div>`).join('') : `<p style="text-align:center; padding:15px; color:var(--text-light); font-size:0.9rem;">No records found for ${status}.</p>`;
 }
 
 async function fetchTasks() {
@@ -422,15 +520,15 @@ async function fetchTasks() {
     try {
         const tasks = await apiFetch(`${API_BASE}/tasks`); // In real app, might need to filter by student/group
         if(tasks.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No pending tasks.</p>';
+            container.innerHTML = '<p style="text-align:center; color:var(--text-light); padding:20px;">No pending tasks.</p>';
             return;
         }
         container.innerHTML = tasks.map(t => `
-            <div class="task-item">
-                <h4>${t.name}</h4>
-                <div class="task-meta">
-                    <span><i class="far fa-calendar"></i> ${t.due_date}</span>
-                    <span><i class="far fa-clock"></i> ${t.due_time}</span>
+            <div class="task-item" style="padding:16px; margin-bottom:12px; border-radius:12px; border-left:4px solid var(--primary);">
+                <h4 style="margin:0 0 8px; font-size:1rem; font-weight:700;">${t.name}</h4>
+                <div class="task-meta" style="display:flex; gap:12px; font-size:0.85rem; color:var(--text-muted);">
+                    <span style="background:#f1f5f9; padding:4px 8px; border-radius:4px;"><i class="far fa-calendar"></i> ${t.due_date}</span>
+                    <span style="background:#f1f5f9; padding:4px 8px; border-radius:4px;"><i class="far fa-clock"></i> ${t.due_time}</span>
                 </div>
             </div>
         `).join('');
@@ -484,7 +582,7 @@ window.clearStudentChat = async function() {
 
     if (!confirm('Are you sure you want to delete your chat history with the teacher? This cannot be undone.')) return;
     try {
-        await apiFetch(`${API_BASE}/messages/${currentUser.id}/${TEACHER_ID}`, { method: 'DELETE' });
+        await apiFetch(`${API_BASE}/messages/${currentUser.id}/${TEACHER_ID}`, { method: 'DELETE' }); // TEACHER_ID is 0
         document.getElementById('chatMessages').innerHTML = '<p style="text-align:center;color:#94a3b8; margin-top: 50px;">Chat history cleared.</p>';
     } catch (e) {
         console.error(e);
@@ -542,7 +640,7 @@ async function fetchChatHistory() {
         const messages = await apiFetch(`${API_BASE}/messages/${currentUser.id}/${TEACHER_ID}`);
         container.innerHTML = '';
         if(messages.length === 0) {
-             container.innerHTML = '<p style="text-align:center;color:#94a3b8; margin-top: 50px;">Start a conversation with your teacher.</p>';
+             container.innerHTML = '<p style="text-align:center;color:var(--text-light); margin-top: 50px;">Start a conversation with your teacher.</p>';
         } else {
              messages.forEach(msg => appendMessage(msg));
         }
@@ -589,7 +687,7 @@ async function fetchMaterials() {
     try {
         const materials = await apiFetch(`${API_BASE}/study-materials`);
         if(materials.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px; grid-column:span 12;">No materials uploaded.</p>';
+            container.innerHTML = '<p style="text-align:center; color:var(--text-light); padding:20px; grid-column:span 12;">No materials uploaded.</p>';
             return;
         }
         container.innerHTML = materials.map(m => `
