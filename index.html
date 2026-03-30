@@ -372,10 +372,14 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            try {
-                // Simulate network delay for animation effect (optional)
-                await new Promise(r => setTimeout(r, 600));
+            // Basic client-side validation
+            if (!email.includes('@')) {
+                showError('Please enter a valid email address');
+                return;
+            }
 
+            try {
+                await new Promise(r => setTimeout(r, 600));
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -383,7 +387,11 @@
                 });
 
                 const text = await response.text();
-                const data = text ? JSON.parse(text) : {};
+                let data = {};
+                
+                try {
+                    data = JSON.parse(text);
+                } catch(e) { throw new Error('Server communication error'); }
 
                 if (data.success) {
                     // Glowing bulb success animation
@@ -406,21 +414,24 @@
                 }
 
             } catch (error) {
-                // Error State
-                errorText.textContent = error.message;
-                errorMsg.classList.add('visible');
-                loginCard.classList.add('shake');
-                
-                // Reset Button
-                loginBtn.classList.remove('loading');
-                loginBtn.disabled = false;
-                
-                // Remove shake class after animation so it can be re-triggered
-                setTimeout(() => {
-                    loginCard.classList.remove('shake');
-                }, 500);
+                showError(error.message);
             }
         });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMsg.classList.add('visible');
+            loginCard.classList.add('shake');
+            
+            // Reset Button
+            loginBtn.classList.remove('loading');
+            loginBtn.disabled = false;
+            
+            // Remove shake class after animation
+            setTimeout(() => {
+                loginCard.classList.remove('shake');
+            }, 500);
+        }
     </script>
 </body>
 </html>
