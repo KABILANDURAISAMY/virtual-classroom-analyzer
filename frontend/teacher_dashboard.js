@@ -1,5 +1,8 @@
 // --- Configuration & State ---
-const API_BASE = '/api';
+const APP_CONFIG = window.APP_CONFIG || {};
+const API_BASE = APP_CONFIG.API_BASE_URL || '/api';
+const SOCKET_URL = APP_CONFIG.SOCKET_URL || window.location.origin;
+const SAME_ORIGIN_API_BASE = '/api';
 const token = localStorage.getItem('token');
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 let students = [];
@@ -318,7 +321,7 @@ function setupEventListeners() {
 }
 
 function initializeSocket() {
-    socket = io();
+    socket = io(SOCKET_URL);
     socket.on('connect', () => {
         socket.emit('joinRoom', currentUser.id);
     });
@@ -359,10 +362,22 @@ async function apiFetch(url, options = {}) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     };
-    const response = await fetch(url, {
+    const requestOptions = {
         ...options,
         headers: { ...defaultHeaders, ...options.headers }
-    });
+    };
+    let response;
+
+    try {
+        response = await fetch(url, requestOptions);
+    } catch (error) {
+        const fallbackUrl = url.replace(API_BASE, SAME_ORIGIN_API_BASE);
+        if (fallbackUrl === url) {
+            throw error;
+        }
+        response = await fetch(fallbackUrl, requestOptions);
+    }
+
     if (!response.ok) {
         throw new Error(`API request failed: ${response.statusText}`);
     }

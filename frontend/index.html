@@ -341,7 +341,11 @@
         </form>
     </div>
 
+    <script src="/config.js"></script>
     <script>
+        const APP_CONFIG = window.APP_CONFIG || {};
+        const API_BASE = APP_CONFIG.API_BASE_URL || '/api';
+        const SAME_ORIGIN_API_BASE = '/api';
         const loginForm = document.getElementById('loginForm');
         const loginBtn = document.getElementById('loginBtn');
         const errorMsg = document.getElementById('errorMsg');
@@ -357,6 +361,23 @@
             this.classList.toggle('fa-eye');
             this.classList.toggle('fa-eye-slash');
         });
+
+        async function loginRequest(email, password) {
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            };
+
+            try {
+                return await fetch(`${API_BASE}/login`, requestOptions);
+            } catch (error) {
+                if (API_BASE !== SAME_ORIGIN_API_BASE) {
+                    return fetch(`${SAME_ORIGIN_API_BASE}/login`, requestOptions);
+                }
+                throw error;
+            }
+        }
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -380,11 +401,7 @@
 
             try {
                 await new Promise(r => setTimeout(r, 600));
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                const response = await loginRequest(email, password);
 
                 const text = await response.text();
                 let data = {};

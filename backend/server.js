@@ -1,7 +1,8 @@
-require('dotenv').config();
 const dns = require('dns');
 const express = require('express');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'frontend', '.env') });
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -17,16 +18,27 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: "*" }
 });
+const frontendDir = path.join(__dirname, '..', 'frontend');
 
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from both root and frontend folder to prevent ENOENT errors
-app.use(express.static(__dirname));
+// Serve static files from the dedicated frontend folder.
+app.use(express.static(frontendDir));
+
+app.get('/config.js', (req, res) => {
+    const defaultOrigin = `${req.protocol}://${req.get('host')}`;
+    const frontendConfig = {
+        API_BASE_URL: process.env.FRONTEND_API_BASE_URL || `${defaultOrigin}/api`,
+        SOCKET_URL: process.env.FRONTEND_SOCKET_URL || defaultOrigin
+    };
+
+    res.type('application/javascript');
+    res.send(`window.APP_CONFIG = ${JSON.stringify(frontendConfig, null, 2)};`);
+});
 
 app.get('/', (req, res) => {
-    // Serve index.html from root
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(frontendDir, 'index.html'));
 });
 
 // --- MongoDB Schemas ---
