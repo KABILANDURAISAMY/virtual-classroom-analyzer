@@ -628,8 +628,10 @@ const startServer = (port) => {
         });
 };
 
-const initialPort = parseInt(process.env.PORT) || 5000;
-startServer(initialPort);
+if (!process.env.VERCEL) {
+    const initialPort = parseInt(process.env.PORT, 10) || 5000;
+    startServer(initialPort);
+}
 
-// Export for Vercel
-module.exports = server;
+// Export the Express app for Vercel serverless runtime.
+module.exports = app;
