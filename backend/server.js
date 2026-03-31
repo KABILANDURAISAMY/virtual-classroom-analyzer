@@ -15,12 +15,25 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+};
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: corsOptions
 });
 const frontendDir = path.join(__dirname, '..', 'frontend');
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from the dedicated frontend folder.
